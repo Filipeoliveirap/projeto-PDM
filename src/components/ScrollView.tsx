@@ -1,74 +1,54 @@
-import { PropsWithChildren, ReactElement } from "react";
-import { StyleSheet, useColorScheme, View } from "react-native";
-import Animated, {
-    interpolate,
-    useAnimatedRef,
-    useAnimatedStyle,
-    useScrollViewOffset,
-} from "react-native-reanimated";
-
-import ThemedView from "./ThemedView"
-
-const HEADER_HEIGHT = 250;
+import React, { PropsWithChildren } from "react";
+import { StyleSheet, useColorScheme, View, ScrollView as RNScrollView } from "react-native";
+import ThemedView from "./ThemedView";
 
 type Props = PropsWithChildren<{
-    headerImage?: ReactElement;
-    headerBackgroundColor: { dark: string; light: string };
+  headerBackgroundColor: { dark: string; light: string };
 }>;
 
-export default function ScrollView({ children, headerImage, headerBackgroundColor }: Props) {
-    const colorScheme = useColorScheme() ?? "light";
-    const scrollRef = useAnimatedRef<Animated.ScrollView>();
-    const scrollOffset = useScrollViewOffset(scrollRef);
+export default function ScrollView({ children, headerBackgroundColor }: Props) {
+  const colorScheme = useColorScheme() ?? "light";
+  const childrenArray = React.Children.toArray(children);
 
-    const headerAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            {
-                translateY: interpolate(
-                    scrollOffset.value,
-                    [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-                    [-HEADER_HEIGHT / 2, 0, HEADER_HEIGHT * 0.75]
-                ),
-            },
-            {
-                scale: interpolate(
-                    scrollOffset.value,
-                    [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-                    [2, 1, 1]
-                ),
-            },
-        ],
-    }));
+  return (
+    <ThemedView style={styles.container}>
+      
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: headerBackgroundColor[colorScheme] },
+        ]}
+      >
+        {childrenArray.length > 0 && childrenArray[0]}
+      </View>
 
-    const bgColor = colorScheme === "dark" ? headerBackgroundColor.dark : headerBackgroundColor.light;
-
-    return (
-        <ThemedView style={styles.container}>
-            {headerImage && (
-                <Animated.View style={[styles.header, { backgroundColor: bgColor }, headerAnimatedStyle]}>
-                    {headerImage}
-                </Animated.View>
-            )}
-
-            <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16} contentContainerStyle={styles.content}>
-                {children}
-            </Animated.ScrollView>
-        </ThemedView>
-    );
+      <RNScrollView contentContainerStyle={styles.content}>
+        {childrenArray.slice(1)}
+      </RNScrollView>
+    </ThemedView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "gray",
-    },
-    header: {
-        height: HEADER_HEIGHT,
-        overflow: "hidden",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    content: {
-        padding: 16,
-    },
+  container: {
+    flex: 1,
+  },
+  header: {
+    height: 80,
+    justifyContent: "center",
+    alignItems: "flex-end",
+    paddingHorizontal: 20,
+    elevation: 5, 
+    shadowColor: "#000", 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    zIndex: 10, 
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 40,
+    backgroundColor: '#f5f5f5',
+  },
 });
