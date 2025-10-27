@@ -1,27 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, View, StyleSheet, TextInput, Text, TouchableOpacity  } from "react-native";
+import { IJob } from "../../../interfaces/Job";
 
 
 export type JobModalProps = {
     visible: boolean;
-    onAdd: (id_vehicle: number, description: string, price: number, date: string) => void;
+    onAdd: (id_vehicle: number, description: string, price: number, date: string, id: number) => void;
     onClose: () => void;
+    onDelete: (id: number) => void;
+    Job?: IJob;
 };
 
-export default function JobModal({ visible, onAdd, onClose }: JobModalProps) {
+export default function JobModal({ visible, onAdd, onClose, onDelete, Job }: JobModalProps) {
     const [id_vehicle, setIdVehicle] = useState(0);
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState(0);
     const [date, setDate] = useState("");
+    const [id, setId] = useState(0);
+
+    useEffect(() => {
+        if (Job) {
+            setIdVehicle(Job.id_vehicle);
+            setDescription(Job.description);
+            setPrice(Job.price);
+            setDate(Job.date);
+            setId(Job.id);
+        } else {
+            setIdVehicle(0);
+            setDescription("");
+            setPrice(0);
+            setDate("");
+            setId(0);
+        }
+
+    }, [Job]);
 
     const handleAdd = () => {
-        onAdd(id_vehicle, description, price, date);
+        onAdd(id_vehicle, description, price, date , id);
 
         setIdVehicle(0);
         setDescription("");
         setPrice(0);
         setDate("");
-
+        setId(0);
     
         onClose();
     };
@@ -66,6 +87,9 @@ export default function JobModal({ visible, onAdd, onClose }: JobModalProps) {
                         <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
                             <Text style={styles.buttonText}>Close</Text>
                         </TouchableOpacity>
+                        <TouchableOpacity style={styles.buttonDelete} onPress={() => onDelete(id)} disabled={id === 0}>
+                            <Text style={styles.buttonText}>Delete</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -108,6 +132,16 @@ const styles = StyleSheet.create({
         },
 
         buttonClose: {
+            backgroundColor: 'orange',
+            borderRadius: 5,
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: 10,
+            padding: 20,
+        },
+
+        buttonDelete: {
             backgroundColor: 'red',
             borderRadius: 5,
             flex: 1,
