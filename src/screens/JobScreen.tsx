@@ -4,16 +4,17 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
+  View,
 } from "react-native";
 import { IJob } from "../../interfaces/Job";
 import Job from "../components/job/Job";
 import ScrollView from "../components/ScrollView";
-import JobModal from "../components/modals/JobModal";
+import { JobsCreateUpdate } from "./JobsCreateUpdate";
 
 export default function JobScreen() {
   const [jobs, setJobs] = useState<IJob[]>([]);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedJob, setSelectedJob] = useState<IJob>();
+  const [showForm, setShowForm] = useState(false); // controla se mostra a tela de form
   const colorScheme = useColorScheme() ?? "light";
 
   const onAddJob = (
@@ -26,51 +27,33 @@ export default function JobScreen() {
     if (!id || id <= 0) {
       const newJob: IJob = {
         id: Math.random() * 1000,
-        id_vehicle: id_vehicle,
-        description: description,
-        price: price,
-        date: date,
+        id_vehicle,
+        description,
+        price,
+        date,
       };
-      const jobsPlus: IJob[] = [...jobs, newJob];
-      setJobs(jobsPlus);
-    }else{
-      jobs.forEach(job => {
-        if(job.id === id){
-          job.id_vehicle = id_vehicle;
-          job.description = description;
-          job.price = price;
-          job.date = date;
-        }
-      });
+      setJobs([...jobs, newJob]);
+    } else {
+      setJobs(jobs.map((job) =>
+        job.id === id ? { ...job, id_vehicle, description, price, date } : job
+      ));
     }
-    setModalVisible(false);
   };
 
   const onDeleteJob = (id: number) => {
-    const newJobs: Array<IJob> = [];
-    for (let index = 0; index <jobs.length; index++) {
-      const job = jobs[index];
-      if(job.id !== id){
-        newJobs.push(job);
-      }
-    }
-    setJobs(newJobs);
-    setModalVisible(false);
+    setJobs(jobs.filter((job) => job.id !== id));
   };
 
-  const openModal = () => {
-    setSelectedJob(undefined);
-    setModalVisible(true);
-  };
-
-  const openEditModal = (selectedJob: IJob) => {
-    setSelectedJob(selectedJob);
-    setModalVisible(true);
-  };
-  const closeModal = () => {
-    setModalVisible(false);
-  };
-
+  if (showForm) {
+    return (
+      <JobsCreateUpdate
+        onAdd={onAddJob}
+        onDelete={onDeleteJob}
+        onBack={() => { setShowForm(false); setSelectedJob(undefined); }}
+        Job={selectedJob}
+      />
+    );
+  }
 
   return (
     <ScrollView headerBackgroundColor={{ light: "white", dark: "#121212" }}>
@@ -79,7 +62,7 @@ export default function JobScreen() {
           styles.headerButtonContainer,
           { backgroundColor: colorScheme === "dark" ? "#121212" : "#fff" },
         ]}
-        onPress={openModal}
+        onPress={() => { setSelectedJob(undefined); setShowForm(true); }}
         activeOpacity={0.7}
       >
         <Text
@@ -91,21 +74,18 @@ export default function JobScreen() {
           +
         </Text>
       </TouchableOpacity>
-      {jobs.map(job => (
-        <TouchableOpacity key={job.id} onPress={() => openEditModal(job)}>
-          <Job
-            id={job.id}                     
-            id_vehicle={job.id_vehicle}
-            description={job.description}
-            price={job.price}
-            date={job.date}
-          />
+
+      {jobs.map((job) => (
+        <TouchableOpacity key={job.id} onPress={() => { setSelectedJob(job); setShowForm(true); }}>
+          <Job {...job} />
         </TouchableOpacity>
       ))}
 
-
-      
-      <JobModal visible={modalVisible} onAdd={onAddJob} onClose={closeModal} onDelete={onDeleteJob} Job={selectedJob} />
+      <View style={styles.boxButton}>
+        <TouchableOpacity onPress={() => setShowForm(true)}>
+          <Text style={{ color: "#fff" }}>Cadastrar</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -121,5 +101,15 @@ const styles = StyleSheet.create({
   headerButton: {
     fontWeight: "bold",
     fontSize: 28,
+  },
+  boxButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    right: 20,
+    bottom: 3,
+    backgroundColor: "green",
+    padding: 10,
+    borderRadius: 20,
   },
 });
