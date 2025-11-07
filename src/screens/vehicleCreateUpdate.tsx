@@ -1,81 +1,77 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { IJob } from "../../interfaces/Job";
+import { IVehicle } from "../../interfaces/vehicle";
 
 type Props = {
-  onAdd: (id_vehicle: number, description: string, price: number, date: string, id: number) => void;
+  onSave: (carPlate: string, id_user: number, color: string, id?: number) => void;
   onDelete: (id: number) => void;
-  onBack: () => void; 
-  Job?: IJob;
+  onCancel: () => void;
+  vehicle?: IVehicle;
 };
 
-export function JobsCreateUpdate({ onAdd, onDelete, onBack, Job }: Props) {
-  const [id_vehicle, setIdVehicle] = useState(0);
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState(0);
-  const [date, setDate] = useState("");
+export function VehicleCreateUpdate({ onSave, onDelete, onCancel, vehicle }: Props) {
+  const [carPlate, setCarPlate] = useState("");
+  const [id_user, setIdUser] = useState(0);
+  const [color, setColor] = useState("");
   const [id, setId] = useState(0);
 
- 
   useEffect(() => {
-    if (Job) {
-      setIdVehicle(Job.id_vehicle);
-      setDescription(Job.description);
-      setPrice(Job.price);
-      setDate(Job.date);
-      setId(Job.id);
+    if (vehicle) {
+      setCarPlate(vehicle.carPlate);
+      setIdUser(vehicle.id_user);
+      setColor(vehicle.color);
+      setId(vehicle.id);
     } else {
-      setIdVehicle(0);
-      setDescription("");
-      setPrice(0);
-      setDate("");
+      setCarPlate("");
+      setIdUser(0);
+      setColor("");
       setId(0);
     }
-  }, [Job]);
+  }, [vehicle]);
 
-  const handleAdd = () => {
-    onAdd(id_vehicle, description, price, date, id);
-    onBack();
+  const handleSave = () => {
+    onSave(carPlate, id_user, color, id);
+    onCancel();
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Serviços</Text>
+      <Text style={styles.title}>Cadastro de Veículo</Text>
 
       <TextInput
         style={styles.boxInput}
-        placeholder="placa"
-        keyboardType="numeric"
-        value={id_vehicle.toString()}
-        onChangeText={(text) => setIdVehicle(Number(text) || 0)}
+        placeholder="Placa"
+        keyboardType="default"
+        value={carPlate}
+        onChangeText={setCarPlate}
       />
 
       <TextInput
         style={styles.boxInput}
-        placeholder="cor"
-        value={description}
-        onChangeText={setDescription}
+        placeholder="Cor"
+        value={color}
+        onChangeText={setColor}
       />
 
       <TextInput
         style={styles.boxInput}
-        placeholder="id_cliente"
+        placeholder="ID do Cliente"
         keyboardType="decimal-pad"
-        value={price.toString()}
-        onChangeText={(text) => setPrice(Number(text))}
+        value={id_user.toString()}
+        onChangeText={(text) => setIdUser(Number(text))}
       />
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.buttonAdd} onPress={handleAdd}>
+        <TouchableOpacity style={styles.buttonAdd} onPress={handleSave}>
           <Text style={styles.buttonText}>Salvar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buttonClose} onPress={onBack}>
+        <TouchableOpacity style={styles.buttonClose} onPress={onCancel}>
           <Text style={styles.buttonText}>Voltar</Text>
         </TouchableOpacity>
 
         {id !== 0 && (
-          <TouchableOpacity style={styles.buttonDelete} onPress={() => { onDelete(id); onBack(); }}>
+          <TouchableOpacity style={styles.buttonDelete} onPress={() => { onDelete(id); onCancel(); }}>
             <Text style={styles.buttonText}>Excluir</Text>
           </TouchableOpacity>
         )}
@@ -107,8 +103,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     marginTop: 20,
-    justifyContent: "space-between",
   },
   buttonAdd: {
     backgroundColor: "green",

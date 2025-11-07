@@ -5,7 +5,7 @@ import { IJob } from "../../interfaces/Job";
 type Props = {
   onAdd: (id_vehicle: number, description: string, price: number, date: string, id: number) => void;
   onDelete: (id: number) => void;
-  onBack: () => void; // para voltar à tela anterior
+  onBack: () => void; 
   Job?: IJob;
 };
 
@@ -16,7 +16,7 @@ export function JobsCreateUpdate({ onAdd, onDelete, onBack, Job }: Props) {
   const [date, setDate] = useState("");
   const [id, setId] = useState(0);
 
-  // ao abrir, preenche os campos se for edição
+
   useEffect(() => {
     if (Job) {
       setIdVehicle(Job.id_vehicle);
@@ -35,7 +35,7 @@ export function JobsCreateUpdate({ onAdd, onDelete, onBack, Job }: Props) {
 
   const handleAdd = () => {
     onAdd(id_vehicle, description, price, date, id);
-    onBack(); // volta pra tela anterior
+    onBack(); 
   };
 
   return (
