@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,108 +6,34 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { IJob } from "../../interfaces/Job";
 import Job from "../components/job/Job";
 import ScrollView from "../components/ScrollView";
-import { JobsCreateUpdate } from "./JobsCreateUpdate";
-import * as Location from "expo-location";
+import { getAllJobs } from "../services/JobService";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
+
+type JobScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "JobScreen"
+>;
 
 export default function JobScreen() {
   const [jobs, setJobs] = useState<IJob[]>([]);
-  const [selectedJob, setSelectedJob] = useState<IJob>();
-  const [showForm, setShowForm] = useState(false);
+  const navigation = useNavigation<JobScreenNavigationProp>();
   const colorScheme = useColorScheme() ?? "light";
 
+  useFocusEffect(
+    useCallback(() => {
+      loadJobs();
+    }, [])
+  );
+
   const loadJobs = async () => {
-    try {
-      const storedJobs = await AsyncStorage.getItem("@jobs");
-      if (storedJobs) {
-        setJobs(JSON.parse(storedJobs));
-      }
-    } catch (error) {
-      console.error("Erro ao carregar jobs:", error);
-    }
+    const data = await getAllJobs();
+    setJobs(data);
   };
-
-  const saveJobs = async (jobsToSave: IJob[]) => {
-    try {
-      await AsyncStorage.setItem("@jobs", JSON.stringify(jobsToSave));
-    } catch (error) {
-      console.error("Erro ao salvar jobs:", error);
-    }
-  };
-
-  useEffect(() => {
-    loadJobs();
-  }, []);
-
-  useEffect(() => {
-    saveJobs(jobs);
-  }, [jobs]);
-
-  const onAddJob = async (
-    id_vehicle: number,
-    description: string,
-    price: number,
-    date: string,
-    id?: number
-  ) => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permissão para acessar localização negada.");
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-
-      if (!id || id <= 0) {
-        const newJob: IJob = {
-          id: Math.random() * 1000,
-          id_vehicle,
-          description,
-          price,
-          date,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        };
-        setJobs((prevJobs) => [...prevJobs, newJob]);
-      } else {
-        const updatedJobs = jobs.map((job) =>
-          job.id === id
-            ? { ...job, id_vehicle, description, price, date, ...coords }
-            : job
-        );
-        setJobs(updatedJobs);
-      }
-    } catch (error) {
-      console.error("Erro ao obter localização:", error);
-    }
-  };
-
-  const onDeleteJob = (id: number) => {
-    const filtered = jobs.filter((job) => job.id !== id);
-    setJobs(filtered);
-  };
-
-  if (showForm) {
-    return (
-      <JobsCreateUpdate
-        onAdd={onAddJob}
-        onDelete={onDeleteJob}
-        onBack={() => {
-          setShowForm(false);
-          setSelectedJob(undefined);
-        }}
-        Job={selectedJob}
-      />
-    );
-  }
 
   return (
     <ScrollView headerBackgroundColor={{ light: "white", dark: "#121212" }}>
@@ -116,10 +42,7 @@ export default function JobScreen() {
           styles.headerButtonContainer,
           { backgroundColor: colorScheme === "dark" ? "#121212" : "#fff" },
         ]}
-        onPress={() => {
-          setSelectedJob(undefined);
-          setShowForm(true);
-        }}
+        onPress={() => navigation.navigate("JobsCreateUpdate")}
         activeOpacity={0.7}
       >
         <Text
@@ -135,17 +58,18 @@ export default function JobScreen() {
       {jobs.map((job) => (
         <TouchableOpacity
           key={job.id}
-          onPress={() => {
-            setSelectedJob(job);
-            setShowForm(true);
-          }}
+          onPress={() =>
+            navigation.navigate("JobsCreateUpdate", { jobId: job.id })
+          }
         >
           <Job {...job} />
         </TouchableOpacity>
       ))}
 
       <View style={styles.boxButton}>
-        <TouchableOpacity onPress={() => setShowForm(true)}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("JobsCreateUpdate")}
+        >
           <Text style={{ color: "#fff" }}>Cadastrar</Text>
         </TouchableOpacity>
       </View>
