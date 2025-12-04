@@ -1,37 +1,51 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { getVehicleById, saveVehicle, deleteVehicle } from "../services/VehicleService";
 import { IVehicle } from "../../interfaces/vehicle";
 
-type Props = {
-  onSave: (carPlate: string, id_user: number, color: string, id?: number) => void;
-  onDelete: (id: number) => void;
-  onCancel: () => void;
-  vehicle?: IVehicle;
-};
+type VehicleScreenNav = NativeStackNavigationProp<
+  RootStackParamList,
+  "VehicleCreateUpdate"
+>;
 
-export function VehicleCreateUpdate({ onSave, onDelete, onCancel, vehicle }: Props) {
-  const [carPlate, setCarPlate] = useState("");
-  const [id_user, setIdUser] = useState(0);
-  const [color, setColor] = useState("");
-  const [id, setId] = useState(0);
+type VehicleScreenRoute = RouteProp<
+  RootStackParamList,
+  "VehicleCreateUpdate"
+>;
+
+export default function VehicleCreateUpdate() {
+  const navigation = useNavigation<VehicleScreenNav>();
+  const route = useRoute<VehicleScreenRoute>();
+  const vehicleId = route.params?.vehicleId;
+
+  const [vehicle, setVehicle] = useState<Partial<IVehicle>>({
+    carPlate: "",
+    color: "",
+    id_user: 0,
+  });
 
   useEffect(() => {
-    if (vehicle) {
-      setCarPlate(vehicle.carPlate);
-      setIdUser(vehicle.id_user);
-      setColor(vehicle.color);
-      setId(vehicle.id);
-    } else {
-      setCarPlate("");
-      setIdUser(0);
-      setColor("");
-      setId(0);
-    }
-  }, [vehicle]);
+    if (vehicleId) loadVehicle();
+  }, [vehicleId]);
 
-  const handleSave = () => {
-    onSave(carPlate, id_user, color, id);
-    onCancel();
+  const loadVehicle = async () => {
+    const v = await getVehicleById(vehicleId!);
+    if (v) setVehicle(v);
+  };
+
+  const handleSave = async () => {
+    await saveVehicle({ id: vehicleId, ...vehicle });
+    navigation.goBack();
+  };
+
+  const handleDelete = async () => {
+    if (vehicleId) {
+      await deleteVehicle(vehicleId);
+      navigation.goBack();
+    }
   };
 
   return (
@@ -41,24 +55,23 @@ export function VehicleCreateUpdate({ onSave, onDelete, onCancel, vehicle }: Pro
       <TextInput
         style={styles.boxInput}
         placeholder="Placa"
-        keyboardType="default"
-        value={carPlate}
-        onChangeText={setCarPlate}
+        value={vehicle.carPlate}
+        onChangeText={(text) => setVehicle({ ...vehicle, carPlate: text })}
       />
 
       <TextInput
         style={styles.boxInput}
         placeholder="Cor"
-        value={color}
-        onChangeText={setColor}
+        value={vehicle.color}
+        onChangeText={(text) => setVehicle({ ...vehicle, color: text })}
       />
 
       <TextInput
         style={styles.boxInput}
         placeholder="ID do Cliente"
-        keyboardType="decimal-pad"
-        value={id_user.toString()}
-        onChangeText={(text) => setIdUser(Number(text))}
+        keyboardType="number-pad"
+        value={vehicle.id_user?.toString()}
+        onChangeText={(text) => setVehicle({ ...vehicle, id_user: Number(text) })}
       />
 
       <View style={styles.buttonContainer}>
@@ -66,12 +79,12 @@ export function VehicleCreateUpdate({ onSave, onDelete, onCancel, vehicle }: Pro
           <Text style={styles.buttonText}>Salvar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buttonClose} onPress={onCancel}>
+        <TouchableOpacity style={styles.buttonClose} onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText}>Voltar</Text>
         </TouchableOpacity>
 
-        {id !== 0 && (
-          <TouchableOpacity style={styles.buttonDelete} onPress={() => { onDelete(id); onCancel(); }}>
+        {vehicleId && (
+          <TouchableOpacity style={styles.buttonDelete} onPress={handleDelete}>
             <Text style={styles.buttonText}>Excluir</Text>
           </TouchableOpacity>
         )}
@@ -103,27 +116,23 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+    gap: 10,
     marginTop: 20,
   },
   buttonAdd: {
     backgroundColor: "green",
     padding: 15,
     borderRadius: 5,
-    marginHorizontal: 5,
   },
   buttonClose: {
     backgroundColor: "orange",
     padding: 15,
     borderRadius: 5,
-    marginHorizontal: 5,
   },
   buttonDelete: {
     backgroundColor: "red",
     padding: 15,
     borderRadius: 5,
-    marginHorizontal: 5,
   },
   buttonText: {
     color: "#fff",
